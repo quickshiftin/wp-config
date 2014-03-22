@@ -1,6 +1,56 @@
 <?php
 /**
- * Configure a component of Wordpress.
+ * XXX I'm ashamed of this implementation, but it's v1.0, just trying
+ *     to get something out the door!
+ */
+$wpConfigType = 'site';
+
+/**
+ * Configure a Wordpress plugin.
+ *
+ * $sPluginName must be the name of the plugin. Specifically the name
+ * used for the plugin directory in the wp-content/plugins directory.
+ *
+ * $aWpConfig is optional, however it is required the first time you call
+ * wpConfigure for a given $sConfigKey. Subsequent calls to wpCofigure for
+ * the same key need not pass $aWpConfig. On subsequent calls, wpConfigure
+ * will return the compiled configuration for $sConfigKey.
+ *
+ * $sPluginName string The name of the plugin to configure.
+ * $aWpConfig array Raw configuration for the component.
+ */
+function wpConfigurePlugin($sPluginName, array $aWpConfig=array())
+{
+    global $wpConfigType;
+    $wpConfigType = 'plugin';
+
+    return wpConfigure($sPluginName, $aWpConfig);
+}
+
+/**
+ * Configure a Wordpress theme.
+ *
+ * $sPluginName must be the name of the plugin. Specifically the name
+ * used for the plugin directory in the wp-content/plugins directory.
+ *
+ * $aWpConfig is optional, however it is required the first time you call
+ * wpConfigure for a given $sConfigKey. Subsequent calls to wpCofigure for
+ * the same key need not pass $aWpConfig. On subsequent calls, wpConfigure
+ * will return the compiled configuration for $sConfigKey.
+ *
+ * $sThemeName string The name of the theme to configure.
+ * $aWpConfig array Raw configuration for the component.
+ */
+function wpConfigureTheme($sThemeName, array $aWpConfig=array())
+{
+    global $wpConfigType;
+    $wpConfigType = 'theme';
+
+    return wpConfigure($sThemeName, $aWpConfig);
+}
+
+/**
+ * Configure Wordpress.
  * $aWpConfig is optional, however it is required the first time you call
  * wpConfigure for a given $sConfigKey. Subsequent calls to wpCofigure for
  * the same key need not pass $aWpConfig. On subsequent calls, wpConfigure
@@ -11,6 +61,7 @@
  */
 function wpConfigure($sConfigKey, array $aWpConfig=array())
 {
+    global $wpConfigType;
     static $aSiteConfigured = array();
     static $aConfig         = array();
 
@@ -46,12 +97,12 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
     //---------------------------------------------------------------------
     // Bail if we're in development and there's no local configuration file
     //---------------------------------------------------------------------
-    if($sConfigKey == 'site') {
+    if($wpConfigType == 'site') {
         if(APPLICATION_ENV == 'development' &&
            !file_exists(__DIR__ . '/wp-config-local.php'))
             die('Please define a development configuration file. ' .
                 'See example file local-config-example.php');
-    } else {
+    } elseif($wpConfigType == 'plugin') {
         // Bail if the plugin path DNE
         $sPluginPath = __DIR__ . '/wp-content/plugins/' . $sConfigKey;
         if(!is_dir($sPluginPath))
@@ -61,6 +112,19 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
            !file_exists($sPluginPath . '/' . $sConfigKey . '-config-local.php'))
             die('Please define a development configuration file. ' .
                 'See example file local-config-example.php');
+    } elseif($wpConfigType == 'theme') {
+        // Bail if the theme path DNE
+        $sThemePath = __DIR__ . '/wp-content/themes/' . $sConfigKey;
+        if(!is_dir($sThemePath))
+            return false;
+
+        if(APPLICATION_ENV == 'development' &&
+           !file_exists($sThemePath . '/' . $sConfigKey . '-config-local.php'))
+            die('Please define a development configuration file. ' .
+                'See example file local-config-example.php');
+    } else {
+        // Bail if unrecognized type
+        die('Unrecognized wpConfigType: ' . $wpConfigType);
     }
 
     //------------------------------------------------------------
@@ -71,7 +135,7 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
     $aEnvs['development'] = array();
     $sDevKey              = '';
     if(APPLICATION_ENV == 'development') {
-        if($sConfigKey == 'site') {
+        if($wpConfigType == 'site') {
             // A simple security measure, wp-config-local.php expects LOCAL_CONFIG to
             // be defined and set to true or it will exit
             define('LOCAL_CONFIG', true);
@@ -88,7 +152,7 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
             if(strpos($sDevKey, 'development:') === false)
                 die('Invalid configuraiton file (3) ' . __DIR__ . '/wp-config-local.php');
             $aDevData = $a[$sDevKey];
-        } else {
+        } elseif($wpConfigType == 'plugin') {
             // A simple security measure, wp-config-local.php expects LOCAL_CONFIG to
             // be defined and set to true or it will exit
             define('LOCAL_CONFIG', true);
@@ -96,6 +160,23 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
             // The array must have one key, 'development:<extends>', where <extends>
             // specifies the environment development extends
             $a = require $sPluginPath . '/' . $sConfigKey . '-config-local.php';
+            if(!is_array($a))
+                die('Invalid configuraiton file (1) ' . '/' . $sConfigKey . '-config-local.php');
+            $aKeys = array_keys($a);
+            if(count($aKeys) != 1)
+                die('Invalid configuraiton file (2) ' . '/' . $sConfigKey . '-config-local.php');
+            $sDevKey = array_shift($aKeys);
+            if(strpos($sDevKey, 'development:') === false)
+                die('Invalid configuraiton file (3) ' . '/' . $sConfigKey . '-config-local.php');
+            $aDevData = $a[$sDevKey];
+        } elseif($wpConfigType == 'theme') {
+            // A simple security measure, wp-config-local.php expects LOCAL_CONFIG to
+            // be defined and set to true or it will exit
+            define('LOCAL_CONFIG', true);
+
+            // The array must have one key, 'development:<extends>', where <extends>
+            // specifies the environment development extends
+            $a = require $sThemePath . '/' . $sConfigKey . '-config-local.php';
             if(!is_array($a))
                 die('Invalid configuraiton file (1) ' . '/' . $sConfigKey . '-config-local.php');
             $aKeys = array_keys($a);
@@ -221,9 +302,12 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
     // Get the config for current env & define it, oldschool style
     //------------------------------------------------------------
     foreach($_aConfig as $k => $v) {
+        //-----------------------------------------------------------------
+        // Backreferences
         // support for using already defined components in other components
         // these are denoted by curly braces
         // @note consider strtr instead of preg_match_all here
+        //-----------------------------------------------------------------
         if(preg_match_all('/\{.*?\}/', $v, $aMatches))
             foreach($aMatches[0] as $_sMatch) {
                 // build the match witout the curly braces

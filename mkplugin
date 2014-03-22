@@ -1,0 +1,9 @@
+#!/bin/bash
+if [ -f wpConfigure.zip ]; then
+    rm wpConfigure.zip
+fi
+
+mkdir wpConfigure
+cp *.php wpConfigure
+zip -r wpConfigure wpConfigure
+rm -rf wpConfigure
