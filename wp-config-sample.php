@@ -12,7 +12,7 @@
  *
  * @package WordPress
  */
-require_once __DIR__ . '/wpConfigure.php'
+require_once __DIR__ . '/wpConfigure.php';
 wpConfigure('site', array(
    // Production website
   'production' => array(
@@ -63,7 +63,11 @@ wpConfigure('site', array(
        * It is strongly recommended that plugin and theme developers use WP_DEBUG
        * in their development environments.
        */
-      'WP_DEBUG' => <?=WP_DEBUG?>,
+    <?php if(WP_DEBUG): ?>
+      'WP_DEBUG' => true,
+    <?php else: ?>
+      'WP_DEBUG' => false,
+    <?php endif; ?>
   ),
   //------------------------------------------------------------
   // If you don't have a staging site, you can just leave this
@@ -97,7 +101,7 @@ if(defined('WP_CLI_LOAD_ONLY') && WP_CLI_LOAD_ONLY === true)
  * You can have multiple installations in one database if you give each a unique
  * prefix. Only numbers, letters, and underscores please!
  */
-$table_prefix = 'wp_';
+$table_prefix = '<?=$table_prefix?>';
 
 /* That's all, stop editing! Happy blogging. */
 
