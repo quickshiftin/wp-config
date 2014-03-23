@@ -110,13 +110,25 @@ Theme & Plugin Support
 Beyond database configuration, there might not be a whole lot of other values to enter in your project's `wp-config.php` file. `wpConfigure` is readily available for theme and plugin development too! This is where you might find some more milage because now you can easily configure your theme and plugin code for multiple environments.
 To configure a module all you need to do is come up with an identifier (usually based on the theme or plugin name).
 ```php
-wpConfigure('my-plugin', array(
+wpConfigurePlugin('my-plugin', array(
   'production' => array(
     'MY_PLUGIN_CONFIG_VAR' => 'Production value',
     'MY_PLUGIN_SECOND_VAR' => 'Common value',
   ),
   'development:production' => array(
     'MY_PLUGIN_CONFIG_VAR' => 'Development value',  
+  )
+));
+```
+The first argument has to the name of your theme, specifically the name of the folder for your theme in the plugins directory. To configure a theme, the same rules apply, the only difference is you call `wpConfigureTheme`.
+```php
+wpConfigureTheme('my-theme', array(
+  'production' => array(
+    'MY_THEME_CONFIG_VAR' => 'Production value',
+    'MY_THEME_SECOND_VAR' => 'Common value',
+  ),
+  'development:production' => array(
+    'MY_THEME_CONFIG_VAR' => 'Development value',  
   )
 ));
 ```
@@ -150,7 +162,7 @@ Caching
 $myPluginConfig = wpConfigure('my-plugin');
 echo $myPluginConfig['MY_PLUGIN_CONFIG_VAR'];
 ```
-With php 5.4+ you can immediately access the value from the function call
+With php 5.4+ you can immediately access the value from the function call. Note this is slow, so save to an variable if you plan to access a lot of variables from the array.
 ```php
 echo wpConfigure('my-plugin')['MY_PLUGIN_CONFIG_VAR'];
 ```
@@ -170,7 +182,40 @@ API
  */
 function wpConfigure($sConfigKey, array $aWpConfig=array())
 ```
-
+```php
+/**
+ * Configure a Wordpress plugin.
+ *
+ * $sPluginName must be the name of the plugin. Specifically the name
+ * used for the plugin directory in the wp-content/plugins directory.
+ *
+ * $aWpConfig is optional, however it is required the first time you call
+ * wpConfigure for a given $sConfigKey. Subsequent calls to wpCofigure for
+ * the same key need not pass $aWpConfig. On subsequent calls, wpConfigure
+ * will return the compiled configuration for $sConfigKey.
+ *
+ * $sPluginName string The name of the plugin to configure.
+ * $aWpConfig array Raw configuration for the component.
+ */
+function wpConfigurePlugin($sPluginName, array $aWpConfig=array())
+```
+```php
+/**
+ * Configure a Wordpress theme.
+ *
+ * $sPluginName must be the name of the plugin. Specifically the name
+ * used for the plugin directory in the wp-content/plugins directory.
+ *
+ * $aWpConfig is optional, however it is required the first time you call
+ * wpConfigure for a given $sConfigKey. Subsequent calls to wpCofigure for
+ * the same key need not pass $aWpConfig. On subsequent calls, wpConfigure
+ * will return the compiled configuration for $sConfigKey.
+ *
+ * $sThemeName string The name of the theme to configure.
+ * $aWpConfig array Raw configuration for the component.
+ */
+function wpConfigureTheme($sThemeName, array $aWpConfig=array())
+```
 Motivation
 ==========
 
