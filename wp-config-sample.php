@@ -12,7 +12,6 @@
  *
  * @package WordPress
  */
-require_once __DIR__ . '/wpConfigure.php';
 wpConfigure('site', array(
    // Production website
   'production' => array(
