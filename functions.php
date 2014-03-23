@@ -23,7 +23,7 @@ function wpConfigureFindConfig()
         $sConfigRoot = realpath($sWebRoot . '/..');
         if(!file_exists($sConfigPath))
             return false;
-
+    }
     return array($sWebRoot, $sConfigRoot, $sConfigPath);
 }
 
@@ -125,7 +125,7 @@ register_deactivation_hook(__FILE__, function() {
  * your own plugin or theme for example. This will help you
  * create the skeleton.
  */
-function wpConfigureStub($sType, $sName)
+function wpConfigureStub($sType, $sName, $sLevel)
 {
     if($sType != 'plugin' && $sType != 'theme')
         return false;
@@ -134,17 +134,36 @@ function wpConfigureStub($sType, $sName)
     if($aConfigInfo === false)
         return false;
 
+if($sLevel === 'development') {
+    $sSampleCode = <<<CODE2
+<?php
+// Some simple security to prevent direct access
+if(!defined('LOCAL_CONFIG') || LOCAL_CONFIG !== true)
+    die();
+
+// Return the configuration for development
+// @note The key defines the environment development extends from
+return array(
+    'development:staging' => array(
+));
+CODE2;
+return $sSampleCode;
+}
+
     list($sWebRoot, $sConfigRoot, $sConfigPath) = $aConfigInfo;
 
     if($sType == 'plugin') {
+        /*
         if(!is_dir($sWebRoot . '/wp-content/plugins/' . $sName))
             return false;
         copy(
-            $sWebRoot . '/wp-content/plugins/wpConfigure/wp-config-local.php',
+            __DIR__ . '/' . $sName . '/wp-config-local.php',
             $sWebRoot . '/wp-content/plugins/' . $sName . '-config-local.php');
+        */
 
         $sSampleCode = <<<CODE
-\$aPluginConfig = wpConfigurePlugin(array(
+<?php
+\$aPluginConfig = wpConfigurePlugin('$sName', array(
     'production' => array(
      ),
     'staging:production' => array(
@@ -152,22 +171,39 @@ function wpConfigureStub($sType, $sName)
 ));
 CODE;
     } else {
-
+        /*
         if(!is_dir($sWebRoot . '/wp-content/themes/' . $sName))
             return false;
         copy(
-            $sWebRoot . '/wp-content/plugins/wpConfigure/wp-config-local.php',
+            __DIR__ . $sName . '/wp-config-local.php',
             $sWebRoot . '/wp-content/plugins/' . $sName . '-config-local.php');
-
-        $sSampleCode = <<<CODE
-\$aThemeConfig = wpConfigureTheme(array(
+        */
+        $sSampleCode = <<<CODE3
+<?php
+\$aThemeConfig = wpConfigureTheme('$sName', array(
     'production' => array(
      ),
     'staging:production' => array(
     ),
 ));
-CODE;
+CODE3;
     }
 
     return $sSampleCode;
+}
+
+add_action(
+    'admin_menu', function() {
+        add_management_page(
+            'WpConfigure',
+            'WpConfigure',
+            'manage_options',
+            'wpConfigure',
+            'wpConfigure_render_admin');
+    });
+
+
+function wpConfigure_render_admin()
+{
+    require __DIR__ . '/admin-tmpl.php';
 }
