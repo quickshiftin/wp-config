@@ -1,9 +1,18 @@
 #!/bin/bash
-if [ -f wpConfigure.zip ]; then
-    rm wpConfigure.zip
+if [[ -f wpConfigure*.zip ]]; then
+    rm wpConfigure*.zip
 fi
 
 mkdir wpConfigure
 cp *.php wpConfigure
+echo >> wpConfigure/wp-config-sample.php
+tail -n+2 wpConfigure/wpConfigure.php >> wpConfigure/wp-config-sample.php
+rm wpConfigure/wpConfigure.php
+cp readme.txt wpConfigure
 zip -r wpConfigure wpConfigure
 rm -rf wpConfigure
+
+version="$1"
+if [ ! -z "$version" ]; then
+    mv wpConfigure.zip wpConfigure-"$version".zip
+fi
