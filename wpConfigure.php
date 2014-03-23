@@ -71,6 +71,9 @@ function wpConfigure($sConfigKey, array $aWpConfig=array())
     static $aSiteConfigured = array();
     static $aConfig         = array();
 
+    if(!isset($wpConfigType))
+        $wpConfigType = 'site';
+
     //----------------------------------------------------------------------------
     // Bail if the site has already been configured
     // The compiled config is cached in $aConfig so we just return that here
