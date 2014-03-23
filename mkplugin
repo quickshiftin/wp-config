@@ -1,5 +1,6 @@
 #!/bin/bash
-if [[ -f wpConfigure*.zip ]]; then
+ls wpConfigure*.zip >/dev/null 2>&1
+if [ $? -eq 0 ]; then
     rm wpConfigure*.zip
 fi
 
