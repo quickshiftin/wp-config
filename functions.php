@@ -3,60 +3,125 @@
   Plugin Name: wpConfigure
   Plugin URI: http://quickshiftin.com/software/wp-configure
   Version: 1.0
-  Author: Quickshiftin 
+  Author: quickshiftin 
   Author URI: http://quickshiftin.com/about
   Description: Advanced configuration system for Wordpress.
   License: GPL v3
 */
 
+function wpConfigureFindConfig()
+{
+    $sWebRoot    = realpath(__DIR__ . '/../../..');
+    $sConfigRoot = $sWebRoot;
+
+    // Look for wp-config.php in the typical location
+    $sConfigPath = $sWebRoot . '/wp-config.php';
+    if(!file_exists($sConfigPath)) {
+        // If it doesn't exist, look one level above the webroot,
+        // as some people move wp-config.php up on level
+        // If that doesn't exist, then the user will have to tell us where wp-config.php is
+        $sConfigPath = $sWebRoot . '/../wp-config.php';
+        $sConfigRoot = realpath($sWebRoot . '/..');
+        if(!file_exists($sConfigPath))
+            return false;
+    }
+
+    return array(
+        'sWebRoot'    => $sWebRoot,
+        'sConfigRoot' => $sConfigRoot,
+        'sConfigPath' => $sConfigPath
+    );
+}
+
+function wpActivaationMessage($sType, $sMessage)
+{
+    echo '<div class="'. $sType . '"><p>' . $sMessage . 
+        '</p></div><!-- /.updated -->';
+}
+
+function wpActivationErrorMessage($sMesssage)  { return wpActviationMessage('error', $sMessage);  }
+function wpActivationUpdateMessage($sMesssage) { return wpActviationMessage('update', $sMessage); }
+
+//------------------------------------------------------------
+// Migrate a legacy Wordpress wp-config.php file to the format
+// used by wpConfigure. Provision a blank wp-config-local.php
+// and wp-config-local-example.php.
+// Leave a copy of wp-config.php in wp-config.php.bkup.
+//------------------------------------------------------------
 register_activation_hook(__FILE__, function() {
     global $table_prefix;
 
     //------------------------------------------------------------
-    // Bail if APPLICATION_ENV cannot be detected
+    // Try to determine the location of wp-config.php, bail early
+    // if we can't.
     //------------------------------------------------------------
-    if(getenv('APPLICATION_ENV') === false)
+    $aConfigInfo = wpConfigureFindConfig();
+    if($aConfigInfo === false) {
+        wpActivationUpdateMessage(
+            'Could not automaitcally migrate wp-config.php, see instructions for manual installation.');
+        return;
+    }
 
     //------------------------------------------------------------
-    // Migrate a legacy Wordpress wp-config.php file to the format used
-    // by wpConfigure. Provision a blank wp-config-local.php and wp-config-local-example.php.
-    // Leave a copy of wp-config.php in wp-config.php.bkup.
+    // Bail if APPLICATION_ENV cannot be detected. This has to be
+    // configured first, so the site loads after the new
+    // wp-config.php file has been generated.
     //------------------------------------------------------------
+    if(getenv('APPLICATION_ENV') === false) {
+        die('APPLICATION_ENV environment variable is not defined, see instructions for configuring it.');
+        return;
+    }
 
-    $sWebRoot = realpath(__DIR__ . '/../../..');
+    //------------------------------------------------------------
+    // Automatic generation of wp-config.php in the wpConfigure
+    // format.
+    //------------------------------------------------------------
+    list($sWebRoot, $sConfigRoot, $sConfigPath) = list($aConfigInfo);
 
     // Backup wp-config.php
-    copy($sWebRoot . '/wp-config.php', $sWebRoot . '/wp-config.php.bkup');
+    copy($sConfigPath, $sConfigRoot . '/wp-config.php.bkup');
 
     // Create the new wp-config.php
     ob_start();
     echo '<?php' . PHP_EOL;
     require __DIR__ . '/wp-config-sample.php';
-    file_put_contents($sWebRoot . '/wp-config.php', ob_get_clean());
+    file_put_contents($sConfigRoot . '/wp-config.php', ob_get_clean());
 
     // Stub out wp-config-local.php
-    copy($sWebRoot . '/wp-content/plugins/wpConfigure/wp-config-local.php', $sWebRoot . '/wp-config-local.php');
+    copy(__DIR__ . '/wp-config-local.php', $sConfigRoot . '/wp-config-local.php');
 
     // Copy over a wp-config-local-example.php file
-    copy($sWebRoot . '/wp-content/plugins/wpConfigure/wp-config-local.php', $sWebRoot . '/wp-config-local-example.php');
+    copy(__DIR__ . '/wp-config-local.php', $sConfigRoot . '/wp-config-local-example.php');
 });
 
+//------------------------------------------------------------
+// Restore the original congiguration file and nuke extra
+// files that we added during activation.
+//------------------------------------------------------------
 register_deactivation_hook(__FILE__, function() {
-    $sWebRoot = realpath(__DIR__ . '/../../..');
+    //------------------------------------------------------------
+    // Try to determine the location of wp-config.php, bail early
+    // if we can't.
+    //------------------------------------------------------------
+    $aConfigInfo = wpConfigureFindConfig();
+    if($aConfigInfo === false)
+        return false;
+
+    list($sWebRoot, $sConfigRoot, $sConfigPath) = list($aConfigInfo);
 
     // Look for the original backup, bail if it's missing
-    if(!file_exists($sWebRoot . '/wp-config.php.bkup'))
+    if(!file_exists($sConfigRoot . '/wp-config.php.bkup'))
         die('No original configuration found at wp-config.php.bkup');
 
     // Restore the original configuration
-    if(!rename($sWebRoot . '/wp-config.php.bkup', $sWebRoot . '/wp-config.php'))
+    if(!rename($sConfigRoot . '/wp-config.php.bkup', $sConfigRoot . '/wp-config.php'))
         die('Failed to restore wp-config.php from backup wp-config.php.bkup');
 
-    // Nuke other assets from the plugin
-    if(file_exists($sWebRoot . '/wp-config-local.php'))
-        unlink($sWebRoot . '/wp-config-local.php');
-    if(file_exists($sWebRoot . '/wp-config-local-example.php'))
-        unlink($sWebRoot . '/wp-config-local-example.php');
+    // Nuke other assets from the plugin if they exist
+    if(file_exists($sConfigRoot . '/wp-config-local.php'))
+        unlink($sConfigRoot . '/wp-config-local.php');
+    if(file_exists($sConfigRoot . '/wp-config-local-example.php'))
+        unlink($sConfigRoot . '/wp-config-local-example.php');
 });
 
 /**
@@ -70,7 +135,12 @@ function wpConfigureStub($sType, $sName)
     if($sType != 'plugin' && $sType != 'theme')
         return false;
 
-    $sWebRoot = realpath(__DIR__ . '/../../..');
+    $aConfigInfo = wpConfigureFindConfig();
+    if($aConfigInfo === false)
+        return false;
+
+    list($sWebRoot, $sConfigRoot, $sConfigPath) = list($aConfigInfo);
+
     if($sType == 'plugin') {
         if(!is_dir($sWebRoot . '/wp-content/plugins/' . $sName))
             return false;
