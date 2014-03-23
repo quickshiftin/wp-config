@@ -16,4 +16,8 @@ rm -rf wpConfigure
 version="$1"
 if [ ! -z "$version" ]; then
     mv wpConfigure.zip wpConfigure-"$version".zip
+    md5sum wpConfigure-"$version".zip
+else
+    md5sum wpConfigure.zip
 fi
+
