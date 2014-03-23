@@ -1,12 +1,22 @@
 <?php
 /*
   Plugin Name: wpConfigure
-  Version: 1
-  Author: Quickshiftin http://quickshiftin.com
+  Plugin URI: http://quickshiftin.com/software/wp-configure
+  Version: 1.0
+  Author: Quickshiftin 
+  Author URI: http://quickshiftin.com/about
   Description: Advanced configuration system for Wordpress.
+  License: GPL v3
 */
 
 register_activation_hook(__FILE__, function() {
+    global $table_prefix;
+
+    //------------------------------------------------------------
+    // Bail if APPLICATION_ENV cannot be detected
+    //------------------------------------------------------------
+    if(getenv('APPLICATION_ENV') === false)
+
     //------------------------------------------------------------
     // Migrate a legacy Wordpress wp-config.php file to the format used
     // by wpConfigure. Provision a blank wp-config-local.php and wp-config-local-example.php.
