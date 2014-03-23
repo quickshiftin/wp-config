@@ -8,7 +8,6 @@
   Description: Advanced configuration system for Wordpress.
   License: GPL v3
 */
-
 function wpConfigureFindConfig()
 {
     $sWebRoot    = realpath(__DIR__ . '/../../..');
@@ -24,13 +23,8 @@ function wpConfigureFindConfig()
         $sConfigRoot = realpath($sWebRoot . '/..');
         if(!file_exists($sConfigPath))
             return false;
-    }
 
-    return array(
-        'sWebRoot'    => $sWebRoot,
-        'sConfigRoot' => $sConfigRoot,
-        'sConfigPath' => $sConfigPath
-    );
+    return array($sWebRoot, $sConfigRoot, $sConfigPath);
 }
 
 function wpActivaationMessage($sType, $sMessage)
@@ -76,10 +70,11 @@ register_activation_hook(__FILE__, function() {
     // Automatic generation of wp-config.php in the wpConfigure
     // format.
     //------------------------------------------------------------
-    list($sWebRoot, $sConfigRoot, $sConfigPath) = list($aConfigInfo);
+    list($sWebRoot, $sConfigRoot, $sConfigPath) = $aConfigInfo;
 
     // Backup wp-config.php
-    copy($sConfigPath, $sConfigRoot . '/wp-config.php.bkup');
+    if(!copy($sConfigPath, $sConfigRoot . '/wp-config.php.bkup'))
+        die('Failed to backup original config.');
 
     // Create the new wp-config.php
     ob_start();
@@ -107,7 +102,7 @@ register_deactivation_hook(__FILE__, function() {
     if($aConfigInfo === false)
         return false;
 
-    list($sWebRoot, $sConfigRoot, $sConfigPath) = list($aConfigInfo);
+    list($sWebRoot, $sConfigRoot, $sConfigPath) = $aConfigInfo;
 
     // Look for the original backup, bail if it's missing
     if(!file_exists($sConfigRoot . '/wp-config.php.bkup'))
@@ -139,7 +134,7 @@ function wpConfigureStub($sType, $sName)
     if($aConfigInfo === false)
         return false;
 
-    list($sWebRoot, $sConfigRoot, $sConfigPath) = list($aConfigInfo);
+    list($sWebRoot, $sConfigRoot, $sConfigPath) = $aConfigInfo;
 
     if($sType == 'plugin') {
         if(!is_dir($sWebRoot . '/wp-content/plugins/' . $sName))
