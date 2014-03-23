@@ -24,7 +24,10 @@ function wpConfigurePlugin($sPluginName, array $aWpConfig=array())
     global $wpConfigType;
     $wpConfigType = 'plugin';
 
-    return wpConfigure($sPluginName, $aWpConfig);
+    $result = wpConfigure($sPluginName, $aWpConfig);
+    $wpConfigType = 'site';
+
+    return $result;
 }
 
 /**
@@ -46,7 +49,10 @@ function wpConfigureTheme($sThemeName, array $aWpConfig=array())
     global $wpConfigType;
     $wpConfigType = 'theme';
 
-    return wpConfigure($sThemeName, $aWpConfig);
+    $result = wpConfigure($sThemeName, $aWpConfig);
+    $wpConfigType = 'site';
+
+    return $result;
 }
 
 /**
