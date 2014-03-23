@@ -45,7 +45,7 @@ wpConfigure('site', array(
 ));
 ```
 
-This is just an example. The development configuration actually lives outside of `wp-config.php`, so it can live outside of your SCM. This makes it possible to keep `wp-config.php` under version control and the same for all sites! [Read more](https://github.com/quickshiftin/wp-env-config#scm-conscience) about development configuration below.
+This is just an example. The development configuration actually lives outside of `wp-config.php`, so it can live outside of your SCM. This makes it possible to keep `wp-config.php` under version control and the same for all sites! [Read more](https://github.com/quickshiftin/wpConfigure#scm-concious) about development configuration below.
 
 Setting the environment
 -----------------------
@@ -137,7 +137,7 @@ wpConfigureTheme('my-theme', array(
 
 Backwards Compatibility
 -----------------------
-You may still be wondering how to get access to the new configuration values. The system is backwards compatible with how WordPress works today. That means all the values you define (the keys in the arrays for each environment) become constants. So if you have a configuration like in the [**Theme & Plugin Support**](https://github.com/quickshiftin/wp-env-config/blob/master/README.md#theme--plugin-support) example, `MY_PLUGIN_CONFIG_VAR` will be available as a constant. Its value depends on the running environment, [set by `APPLICATION_ENV`](https://github.com/quickshiftin/wpConfigure#setting-the-environment).
+You may still be wondering how to get access to the new configuration values. The system is backwards compatible with how WordPress works today. That means all the values you define (the keys in the arrays for each environment) become constants. So if you have a configuration like in the [**Theme & Plugin Support**](https://github.com/quickshiftin/wpConfigure#theme--plugin-support) example, `MY_PLUGIN_CONFIG_VAR` will be available as a constant. Its value depends on the running environment, [set by `APPLICATION_ENV`](https://github.com/quickshiftin/wpConfigure#setting-the-environment).
 
 The cool thing is your configuration is also available as an array which might prove handy since you can perform array operations on the entire configuration now. In order to get ahold of the configuration as an array, just assign the result of `wpConfigure` to a variable. Going back to our **Theme & Plugin Support** example
 
