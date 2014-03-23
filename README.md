@@ -51,6 +51,8 @@ Setting the environment
 -----------------------
 Now that you're able to have different configurations for different environments, you need to tell `wpConfigure` which environment it's in. In order to do that you need to pass the `APPLICATION_ENV` [environment variable](http://www.php.net/manual/en/reserved.variables.environment.php). You can do this in different ways depending on how you're running php.
 
+**IMPORTANT: You must configure `APPLICATION_ENV` *before* you can activate the wpConfigure plugin.**
+
 **Apache**
 ```
 SetEnv APPLICATION_ENV "development"
