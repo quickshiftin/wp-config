@@ -2,7 +2,7 @@
 /*
   Plugin Name: wpConfigure
   Plugin URI: http://quickshiftin.com/software/wp-configure
-  Version: 1.0
+  Version: 1.1
   Author: quickshiftin 
   Author URI: http://quickshiftin.com/about
   Description: Advanced configuration system for Wordpress.
